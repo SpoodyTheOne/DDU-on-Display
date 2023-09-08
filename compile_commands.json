@@ -1,0 +1,10 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clangd",
+      "-I/home/snorre/Arduino/libraries/M5StickCplus/src"
+    ],
+    "directory": "/home/snorre/Documents/Skole/DDU/FruitNinja/m5stickcplus",
+    "file": "/home/snorre/Documents/Skole/DDU/FruitNinja/m5stickcplus/m5stickcplus.c"
+  }
+]

@@ -1,0 +1,82 @@
+/*
+    Please install FastLED library first.
+    In arduino library manage search FastLED
+*/
+#include <M5StickCPlus.h>
+#include "FastLED.h"
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <WiFiMulti.h>
+
+#define Neopixel_PIN   32
+#define NUM_LEDS       80
+#define START_BTN_PIN  0
+
+CRGB leds[NUM_LEDS];
+uint8_t gHue                              = 0;
+static TaskHandle_t FastLEDshowTaskHandle = 0;
+static TaskHandle_t userTaskHandle        = 0;
+
+int led = 0;
+int status = WL_IDLE_STATUS;
+char ssid[] = "Next-Guest"; //  your network SSID (name)
+char pass[] = "";    // your network password (use for WPA, or use as key for WEP)
+int keyIndex = 0;            // your network key Index number (needed only for WEP)
+
+unsigned int localPort = 2390;      // local port to listen on
+
+char packetBuffer[255]; //buffer to hold incoming packet
+char ReplyBuffer[] = "acknowledged";       // a string to send back
+
+WiFiMulti wifiMulti;
+WiFiUDP Udp;
+
+void setup() {
+    M5.begin();
+    // M5.Lcd.clear(BLACK);
+
+    wifiMulti.addAP(ssid,pass);
+    
+    // Initialize FastLED with our information
+    // Neopixel_PIN is M5Stack for the port under the USB-C
+    FastLED.addLeds<WS2811, Neopixel_PIN, GRB>(leds, NUM_LEDS)
+        // Idk, probably useful
+        .setCorrection(TypicalLEDStrip);
+    FastLED.setBrightness(10);
+
+    // Create async task/callback idk. Used for timing right i guess
+    xTaskCreatePinnedToCore(FastLEDshowTask, "FastLEDshowTask", 2048, NULL, 2,
+                            NULL, 1);
+}
+
+void loop() {
+ int d = digitalRead(START_BTN_PIN);
+  M5.Lcd.setCursor(0,0);
+  M5.Lcd.print(d);
+
+ if (d == 0) {
+  M5.Lcd.fillScreen(GREEN);
+ } else {
+  M5.Lcd.fillScreen(RED);
+ }
+}
+
+// Function that is responsible for showing the LEDs
+void FastLEDshowTask(void *pvParameters) {
+  for (;;) {
+    // fill_rainbow(leds, NUM_LEDS, gHue, 7);  // rainbow effect
+    // FastLED.show();  // must be executed for neopixel becoming effective
+    // EVERY_N_MILLISECONDS(20) {
+    //     gHue++;
+    // }
+
+    FastLED.clear();
+
+    leds[led] = CRGB::Yellow;
+    FastLED.show();
+
+    EVERY_N_MILLISECONDS(100) {
+      led = (led + 1) % NUM_LEDS;
+    }
+  }
+}
