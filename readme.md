@@ -25,4 +25,4 @@ After intalling the Arduino IDE you must install the libraries and boards requir
 After installing the dependencies configure the board type to be M5Stick-C (Tools->Board->ESP32 Arduino->M5Stick-C)
 
 ### Flashing
-After opening m5stickcplus/m5stickcplus.ino in the Arduino IDE you just have to press the Upload button (→) which will run the program.
+After opening *m5stickcplus/m5stickcplus.ino* in the Arduino IDE you just have to press the Upload button (→) which will run the program.
