@@ -14,11 +14,11 @@ Before you can use the code in this repo you must install and set up Arduino IDE
 ### Configuration
 After intalling the Arduino IDE you must install the libraries and boards required to make the M5 work
 
-*Boards*
+**Boards**
 * Arduino ESP32 Boards
 * esp32
 
-*Libraries*
+**Libraries**
  * M5StickCPlus (+ its dependencies)
  * FastLED
 
