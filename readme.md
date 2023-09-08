@@ -5,10 +5,10 @@ This is a school project entailing the use of an M5StickCPlus in order to make a
 Before you can use the code in this repo you must install and set up Arduino IDE
 
 ### Installation
-*Arch Linux*
+**Arch Linux**\
 `# pacman -S arduino`
 
-*Windows*
+**Windows**\
 [https://wiki-content.arduino.cc/en/Guide/Windows](https://wiki-content.arduino.cc/en/Guide/Windows)
 
 ### Configuration
