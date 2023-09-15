@@ -1,82 +1,102 @@
 /*
-    Please install FastLED library first.
-    In arduino library manage search FastLED
-*/
+ *  This sketch sends random data over UDP on a ESP32 device
+ *
+ */
 #include <M5StickCPlus.h>
-#include "FastLED.h"
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#include <WiFiMulti.h>
 
-#define Neopixel_PIN   32
-#define NUM_LEDS       80
-#define START_BTN_PIN  0
+// WiFi network name and password:
+const char * networkName = "Next-Guest";
+const char * networkPswd = "";
 
-CRGB leds[NUM_LEDS];
-uint8_t gHue                              = 0;
-static TaskHandle_t FastLEDshowTaskHandle = 0;
-static TaskHandle_t userTaskHandle        = 0;
+// Port of udp server
+const int udpPort = 3333;
 
-int led = 0;
-int status = WL_IDLE_STATUS;
-char ssid[] = "Next-Guest"; //  your network SSID (name)
-char pass[] = "";    // your network password (use for WPA, or use as key for WEP)
-int keyIndex = 0;            // your network key Index number (needed only for WEP)
+//Are we currently connected?
+boolean connected = false;
 
-unsigned int localPort = 2390;      // local port to listen on
+//The udp library class
+WiFiUDP udp;
 
-char packetBuffer[255]; //buffer to hold incoming packet
-char ReplyBuffer[] = "acknowledged";       // a string to send back
+void setup(){
+  // Initilize hardware serial:
+  // Serial.begin(115200);
+  
+  M5.begin();
+  M5.Lcd.fillScreen(BLACK);
 
-WiFiMulti wifiMulti;
-WiFiUDP Udp;
+  M5.Lcd.setRotation(1);
 
-void setup() {
-    M5.begin();
-    // M5.Lcd.clear(BLACK);
+  M5.Lcd.println("Being penis >:3");
+  
+  //Connect to the WiFi network
+  connectToWiFi(networkName, networkPswd);
 
-    wifiMulti.addAP(ssid,pass);
-    
-    // Initialize FastLED with our information
-    // Neopixel_PIN is M5Stack for the port under the USB-C
-    FastLED.addLeds<WS2811, Neopixel_PIN, GRB>(leds, NUM_LEDS)
-        // Idk, probably useful
-        .setCorrection(TypicalLEDStrip);
-    FastLED.setBrightness(10);
-
-    // Create async task/callback idk. Used for timing right i guess
-    xTaskCreatePinnedToCore(FastLEDshowTask, "FastLEDshowTask", 2048, NULL, 2,
-                            NULL, 1);
+  delay(5000);
+  
+  xTaskCreatePinnedToCore(UdpThread, "UdpThread", 4096, NULL, 2, NULL, 1);
 }
 
-void loop() {
- int d = digitalRead(START_BTN_PIN);
+#define BUFFER_SIZE 255
+char packetBuffer[BUFFER_SIZE];
+
+void loop(){
+  //only send data when connected
+  M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0,0);
-  M5.Lcd.print(d);
-
- if (d == 0) {
-  M5.Lcd.fillScreen(GREEN);
- } else {
-  M5.Lcd.fillScreen(RED);
- }
+  M5.Lcd.println(WiFi.localIP());
+  M5.Lcd.println(packetBuffer);
+  //Wait for 1 second
+  delay(1000);
 }
 
-// Function that is responsible for showing the LEDs
-void FastLEDshowTask(void *pvParameters) {
+void UdpThread(void *pvParameters) {
   for (;;) {
-    // fill_rainbow(leds, NUM_LEDS, gHue, 7);  // rainbow effect
-    // FastLED.show();  // must be executed for neopixel becoming effective
-    // EVERY_N_MILLISECONDS(20) {
-    //     gHue++;
-    // }
-
-    FastLED.clear();
-
-    leds[led] = CRGB::Yellow;
-    FastLED.show();
-
-    EVERY_N_MILLISECONDS(100) {
-      led = (led + 1) % NUM_LEDS;
+    if(connected){
+      // Recieve packet
+      int packetSize = udp.parsePacket();
+      int length = udp.read(packetBuffer,BUFFER_SIZE);
+      // M5.Lcd.println("Pp");
+      // M5.Lcd.fillScreen(BLACK);
+      // M5.Lcd.setCursor(0,0);
+      // M5.Lcd.println(WiFi.localIP());
+      // M5.Lcd.println("Len: " + length);
+      vTaskDelay(100);
     }
   }
+}
+
+void connectToWiFi(const char * ssid, const char * pwd){
+  M5.Lcd.println("Connecting to WiFi network: " + String(ssid));
+
+  // delete old config
+  WiFi.disconnect(true);
+  //register event handler
+  WiFi.onEvent(WiFiEvent);
+  
+  //Initiate connection
+  WiFi.begin(ssid, pwd);
+
+  M5.Lcd.println("Waiting for WIFI connection...");
+}
+
+//wifi event handler
+void WiFiEvent(WiFiEvent_t event){
+    switch(event) {
+      case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+          //When connected set 
+          M5.Lcd.print("WiFi connected! IP address: ");
+          M5.Lcd.println(WiFi.localIP());  
+          //initializes the UDP state
+          //This initializes the transfer buffer
+          udp.begin(udpPort);
+          connected = true;
+          break;
+      case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+          M5.Lcd.println("WiFi lost connection");
+          connected = false;
+          break;
+      default: break;
+    }
 }
